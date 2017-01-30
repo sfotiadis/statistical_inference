@@ -1,0 +1,67 @@
+---
+title: "Tooth Growth Dataset Analysis"
+author: "Efstathios Fotiadis"
+output: pdf_document
+---
+
+### Overview 
+
+Our objective was to provide a summary of the experimental data set and conduct hypothesis testing between the different groups. Results show that dosage plays a role on teeth growth in guinea pigs while supplement type is important only on lower doses.
+
+### Dataset
+
+The ToothGrowth dataset has been collected from an experiment with 60 guinea pigs. The study meant to identify if there supplement type and the dose affected the legnth of the teeth of the subjects. Two different supplements types were used: Orange Juice(OJ) and Vitamin C (VC) and three different doses 0.5,1.0 and 2.0 mg. There are thus 6 groups - OJ 0.5, VC 0.5, OJ 1, VC 1, OJ 2, VC 2 - each cointaining 10 pigs. The groups are not-paired.
+
+```{r, echo=FALSE, results='hide'}
+attach(ToothGrowth)
+library(knitr)
+```
+
+### Basic statistics
+
+We present the 6 different groups and some basic statistics of them.
+
+```{r}
+library(psych)
+stats2 <- describeBy(len, interaction(supp, dose, sep=" "), mat = TRUE)
+``` 
+```{r echo=FALSE}
+stats2$item <- NULL
+stats2$vars <- NULL
+stats2$trimmed <- NULL
+stats2$mad <- NULL
+stats2$range <- NULL
+
+colnames(stats2) <- c("Group", "Samples", "Mean", "Std. dev.", "Median", "Min", "Max", "Skew", "Kurtosis", "SE")
+rownames(stats2) <- stats2$group
+kable(stats2)
+```
+
+### Visualising groups
+
+When in comes to comparing groups, visulisations often can help. In this case we use boxplots that provide a comprehensive overview of the data.
+
+```{r boxplot, echo=TRUE}
+boxplot(len ~ interaction(supp, dose, sep=" "),data=ToothGrowth,
+        xlab="Group (supp/dose)",
+        ylab="Tooth length (microns)",
+        main='Guinea pig tooth growth')
+```
+
+### Pair-wise t-tests
+
+We proceed to make $\binom 62=15$ tests between the 6 groups. We assume that each group is normally distributed and since the groups are independent we use non-paired tests. Because $n=10$ we prefer to go with the t-test. To account for multiple testing we apply the Bonferroni correction to the p-values. The null hypothesis is that the groups come from the same distribution and we will reject the null hypothesis if the data reveal this to have a p-value < 0.05. We use a two-tailed test because we are interested in differences and we can't assume beforehand which combination is more effective.
+
+```{r t-test}
+library(stats)
+t <-pairwise.t.test(len, interaction(supp, dose, sep=" "), paired=FALSE, p.adjust="bonferroni" )
+kable(t$p.value)
+```
+
+In the table above the p-values for all the t-tests between the 6 groups can be found. For example the p-value for the t-test between the group ```VC 0.5``` and ```OJ 0.5``` is $0.0313870$.
+ 
+### Results
+
+From the results table we note that changing the dosage is important for both supplement types (p<0.05). Furthermore from the boxplot we see that increasing the dosage seems to have a positive effect on tooth length.
+
+Also we observe that the supplement is important (p<0.05) for low doses (0.05 & 1.0 mg). Judging by the box plot, Orange Juice seems to increase tooth growth more that Vitamin C. When the dose is 2.0 mg the supplement type does not affect tooth growth (p = 1.0). 
